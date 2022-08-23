@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  main-db:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5458:5432'
+    volumes:
+      - main-db:/var/lib/postgresql/data
+  cache:
+    image: redis:7
+    restart: always
+    ports:
+    - '6377:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass lenmalendi555
+    volumes:
+      - cache:/data
+  server:
+    build:
+      context: .
+    ports:
+      - "80:3210"
+    depends_on:
+      - main-db
+      - cache
+    environment:
+      APP_ENV: development
+      DB_HOST: main-db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: letzgo
+      REDIS_HOST: cache
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: lenmalendi555lenmalendi555
+    links:
+      - main-db
+      - cache
+    volumes:
+      - ./:/src
+volumes:
+  main-db:
+    driver: local
+  cache:
+    driver: local
